@@ -1,11 +1,24 @@
-import React from 'react'
-
+import React, { useEffect, useState } from 'react'
+import { api } from '../services/api.js';
 const Leaderboard = () => {
-    const leaders = [
-      { rank: 1, name: 'Jane Smith', points: 2500, workouts: 50 },
-      { rank: 2, name: 'Mike Johnson', points: 2300, workouts: 45 },
-      { rank: 3, name: 'Sarah Wilson', points: 2100, workouts: 42 }
-    ];
+  const [leaders, setLeaders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const data = await api.getLeaderboard();
+        setLeaders(data);
+      } catch (err) {
+        console.error('Failed to fetch leaderboard:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLeaderboard();
+  }, []);
+
+  if (loading) return <div className="text-center p-8">Loading...</div>;
   
     return (
       <div className="container mx-auto p-8">

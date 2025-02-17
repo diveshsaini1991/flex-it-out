@@ -1,13 +1,26 @@
-import React, { useState } from 'react'
-
+import React, { useEffect, useState } from 'react'
+import { api } from '../services/api.js';
 const Profile = () => {
-    const [profile, setProfile] = useState({
-      name: 'John Doe',
-      email: 'john@example.com',
-      totalWorkouts: 45,
-      achievements: ['First Workout', 'Week Streak', '100 Squats']
-    });
-  
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await api.getProfile();
+        setProfile(data);
+      } catch (err) {
+        console.error('Failed to fetch profile:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  if (loading) return <div className="text-center p-8">Loading...</div>;
+  if (!profile) return <div className="text-center p-8">Failed to load profile</div>;
+
     return (
       <div className="container mx-auto p-8">
         <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8">
@@ -35,5 +48,6 @@ const Profile = () => {
       </div>
     );
   };
+  
 
 export default Profile

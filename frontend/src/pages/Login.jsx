@@ -1,20 +1,25 @@
 import React, { useState } from 'react'
-
+import { api } from '../services/api.js';
 const Login = ({ setIsAuthenticated, setCurrentPage }) => {
-    const [formData, setFormData] = useState({ email: '', password: '' });
-  
-    const handleSubmit = (e) => {
-      e.preventDefault();
-      // Add login logic here
-      console.log('Login submitted:', formData);
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await api.login(formData.email, formData.password);
       setIsAuthenticated(true);
       setCurrentPage('home');
-    };
-  
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-lg">
-          <h2 className="text-3xl font-bold text-center text-gray-900">Login to FLEX-IT-OUT</h2>
+    } catch (err) {
+      setError('Invalid credentials');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-lg">
+        <h2 className="text-3xl font-bold text-center text-gray-900">Login to FLEX-IT-OUT</h2>
+        {error && <div className="text-red-500 text-center">{error}</div>}
           <form onSubmit={handleSubmit} className="mt-8 space-y-6">
             <div className="rounded-md shadow-sm space-y-4">
               <input

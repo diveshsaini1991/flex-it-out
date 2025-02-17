@@ -23,7 +23,7 @@ const App = () => {
 
     switch (currentPage) {
       case 'signup':
-        return <Signup setCurrentPage={setCurrentPage} />;
+        return <Signup setIsAuthenticated={setIsAuthenticated} setCurrentPage={setCurrentPage} />;
       case 'profile':
         return <Profile />;
       case 'leaderboard':
