@@ -35,9 +35,9 @@ const Leaderboard = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {leaders.map((leader) => (
-                <tr key={leader.rank}>
-                  <td className="px-6 py-4 whitespace-nowrap">{leader.rank}</td>
+              {leaders.map((leader,ind) => (
+                <tr key={ind+1}>
+                  <td className="px-6 py-4 whitespace-nowrap">{ind+1}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{leader.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{leader.points}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{leader.workouts}</td>

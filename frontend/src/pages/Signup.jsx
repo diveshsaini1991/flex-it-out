@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { api } from '../services/api.js';
+import { useNavigate } from 'react-router-dom';
 
-const Signup = ({ setIsAuthenticated, setCurrentPage }) => {
+const Signup = ({ setIsAuthenticated }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -10,13 +11,13 @@ const Signup = ({ setIsAuthenticated, setCurrentPage }) => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
+  const navigate = useNavigate();
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
-    // Validation
+    
+    
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords don't match");
       setLoading(false);
@@ -37,7 +38,7 @@ const Signup = ({ setIsAuthenticated, setCurrentPage }) => {
       );
       
       setIsAuthenticated(true);
-      setCurrentPage('home');
+      navigate('/home');
     } catch (err) {
       setError(err.message);
     } finally {

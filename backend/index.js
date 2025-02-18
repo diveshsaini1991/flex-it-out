@@ -3,6 +3,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
+const cookieParser = require('cookie-parser');
 const connectDB = require('./db/connection.js');
 const User = require('./models/user.model.js');
 const Workout = require('./models/workout.model.js');
@@ -17,6 +18,7 @@ app.use(cors({
   credentials: true 
 }));
 app.use(express.json());
+app.use(cookieParser());
 
 // MongoDB connection
 connectDB();

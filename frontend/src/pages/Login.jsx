@@ -1,17 +1,30 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { api } from '../services/api.js';
-const Login = ({ setIsAuthenticated, setCurrentPage }) => {
+import { useNavigate } from 'react-router-dom';
+const Login = ({ setIsAuthenticated}) => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const isAuthenticated = await api.checkAuthStatus();
+      if (isAuthenticated) {
+        setIsAuthenticated(true);
+        navigate('/home');
+      }
+    };
+    checkAuth();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await api.login(formData.email, formData.password);
       setIsAuthenticated(true);
-      setCurrentPage('home');
+      navigate('/home');
     } catch (err) {
-      setError('Invalid credentials');
+      setError(err.message);
     }
   };
 
