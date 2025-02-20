@@ -1,35 +1,55 @@
-import React, { useRef, useEffect, useState } from "react";
-import * as poseDetection from "@mediapipe/pose";
-import * as drawingUtils from "@mediapipe/drawing_utils";
-import * as cameraUtils from "@mediapipe/camera_utils";
+ 
 
-function Squat({ darkMode }) {
+
+import React, { useRef, useEffect, useState } from "react";
+import { Pose } from "@mediapipe/pose";
+import { Camera } from "@mediapipe/camera_utils";
+import { drawConnectors, drawLandmarks } from "@mediapipe/drawing_utils";
+import axios from "axios"; // Make sure to install axios: npm install axios
+
+function Squat() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [counter, setCounter] = useState(0);
   const [angle, setAngle] = useState(0);
   const [position, setPosition] = useState("None");
   const [feedback, setFeedback] = useState("None");
+  const [workoutStarted, setWorkoutStarted] = useState(false);
+  const [workoutStartTime, setWorkoutStartTime] = useState(null);
+  const [workoutDuration, setWorkoutDuration] = useState(0);
+  const [savedCounter, setSavedCounter] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null);
 
-  // Create refs to maintain state across renders
+  // Use refs to maintain state between renders
   const poseRef = useRef(null);
   const cameraRef = useRef(null);
   const angleBufferRef = useRef([]);
   const positionRef = useRef("None");
+  const durationTimerRef = useRef(null);
 
   useEffect(() => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!workoutStarted) return;
 
-    // Setup canvas
-    const canvasElement = canvasRef.current;
-    canvasElement.width = 640;
-    canvasElement.height = 480;
+    // Update workout duration every second
+    durationTimerRef.current = setInterval(() => {
+      if (workoutStartTime) {
+        const duration = Math.floor((Date.now() - workoutStartTime) / 1000);
+        setWorkoutDuration(duration);
+      }
+    }, 1000);
 
-    // Initialize pose detection
-    poseRef.current = new poseDetection.Pose({
-      locateFile: (file) => {
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
-      },
+    return () => {
+      if (durationTimerRef.current) {
+        clearInterval(durationTimerRef.current);
+      }
+    };
+  }, [workoutStarted, workoutStartTime]);
+
+  useEffect(() => {
+    poseRef.current = new Pose({
+      locateFile: (file) =>
+        `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
     });
 
     poseRef.current.setOptions({
@@ -41,22 +61,6 @@ function Squat({ darkMode }) {
 
     poseRef.current.onResults(onResults);
 
-    // Initialize camera
-    if (videoRef.current) {
-      cameraRef.current = new cameraUtils.Camera(videoRef.current, {
-        onFrame: async () => {
-          if (poseRef.current) {
-            await poseRef.current.send({ image: videoRef.current });
-          }
-        },
-        width: 640,
-        height: 480,
-      });
-
-      cameraRef.current.start();
-    }
-
-    // Cleanup function
     return () => {
       if (cameraRef.current) {
         cameraRef.current.stop();
@@ -64,8 +68,29 @@ function Squat({ darkMode }) {
       if (poseRef.current) {
         poseRef.current.close();
       }
+      if (durationTimerRef.current) {
+        clearInterval(durationTimerRef.current);
+      }
     };
   }, []);
+
+  useEffect(() => {
+    if (!videoRef.current || !poseRef.current) return;
+
+    if (workoutStarted && !cameraRef.current) {
+      cameraRef.current = new Camera(videoRef.current, {
+        onFrame: async () => {
+          await poseRef.current.send({ image: videoRef.current });
+        },
+        width: 640,
+        height: 480,
+      });
+      cameraRef.current.start();
+    } else if (!workoutStarted && cameraRef.current) {
+      cameraRef.current.stop();
+      cameraRef.current = null;
+    }
+  }, [workoutStarted]);
 
   const calculateAngle = (a, b, c) => {
     const radians =
@@ -110,9 +135,9 @@ function Squat({ darkMode }) {
   };
 
   const onResults = (results) => {
-    if (!canvasRef.current) return;
-
     const canvasElement = canvasRef.current;
+    if (!canvasElement) return;
+
     const canvasCtx = canvasElement.getContext("2d");
 
     canvasCtx.save();
@@ -131,16 +156,18 @@ function Squat({ darkMode }) {
       const landmarks = results.poseLandmarks;
 
       // Draw pose landmarks and connectors
-      drawingUtils.drawConnectors(
+      drawConnectors(
         canvasCtx,
         landmarks,
-        poseDetection.POSE_CONNECTIONS,
+        Pose.POSE_CONNECTIONS,
         { color: "#00FF00", lineWidth: 2 }
       );
 
-      drawingUtils.drawLandmarks(canvasCtx, landmarks, {
+      // Draw landmarks with larger red dots
+      drawLandmarks(canvasCtx, landmarks, {
         color: "#FF0000",
-        lineWidth: 1,
+        lineWidth: 2, // Increase line width for better visibility
+        radius: 4, // Increase radius to make the dots larger
       });
 
       // Calculate angles for both legs
@@ -153,15 +180,13 @@ function Squat({ darkMode }) {
 
       const leftAngle = calculateAngle(leftHip, leftKnee, leftAnkle);
       const rightAngle = calculateAngle(rightHip, rightKnee, rightAnkle);
-      const currentAngle = (leftAngle + rightAngle) / 2;
+      const angle = (leftAngle + rightAngle) / 2;
 
       // Smooth angle using a buffer
-      const bufferSize = 5;
-      angleBufferRef.current.push(currentAngle);
-      if (angleBufferRef.current.length > bufferSize) {
+      angleBufferRef.current.push(angle);
+      if (angleBufferRef.current.length > 5) {
         angleBufferRef.current.shift();
       }
-
       const smoothedAngle =
         angleBufferRef.current.reduce((a, b) => a + b, 0) /
         angleBufferRef.current.length;
@@ -174,7 +199,7 @@ function Squat({ darkMode }) {
       if (smoothedAngle > 150 && positionRef.current === "down") {
         positionRef.current = "up";
         setPosition("up");
-        setCounter((prevCounter) => prevCounter + 1);
+        setCounter((prev) => prev + 1);
       } else if (smoothedAngle < 100) {
         positionRef.current = "down";
         setPosition("down");
@@ -187,48 +212,178 @@ function Squat({ darkMode }) {
     canvasCtx.restore();
   };
 
+  const startWorkout = () => {
+    setWorkoutStarted(true);
+    setWorkoutStartTime(Date.now());
+    setCounter(0);
+    angleBufferRef.current = [];
+    positionRef.current = "None";
+    setPosition("None");
+    setSaveStatus(null);
+  };
+
+  const endWorkout = async () => {
+    setWorkoutStarted(false);
+
+    // Only save if there were squats performed
+    if (counter > 0) {
+      await saveWorkout();
+      setSavedCounter(counter);
+    }
+
+    if (cameraRef.current) {
+      cameraRef.current.stop();
+      cameraRef.current = null;
+    }
+
+    if (durationTimerRef.current) {
+      clearInterval(durationTimerRef.current);
+    }
+  };
+
+  const saveWorkout = async () => {
+    try {
+      setIsSaving(true);
+      // Get auth token from localStorage
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        setSaveStatus({
+          success: false,
+          message: "You must be logged in to save workouts",
+        });
+        return;
+      }
+
+      const workoutData = {
+        type: "squat",
+        count: counter,
+        duration: workoutDuration,
+      };
+
+      const response = await axios.post(
+        "http://localhost:3000/api/workouts/addworkout",
+        workoutData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      setSaveStatus({
+        success: true,
+        message: "Workout saved successfully!",
+      });
+    } catch (error) {
+      console.error("Error saving workout:", error);
+      setSaveStatus({
+        success: false,
+        message: error.response?.data?.message || "Error saving workout",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  };
+
   return (
-    <div className="squat-counter ">
-      <h1>Squat Counter</h1>
-      <div className="flex flex-wrap justify-center gap-4 md:flex-nowrap ">
-        <div className="video-container relative shadow-2xl">
-          <video
-            ref={videoRef}
-            width="640"
-            height="480"
-            autoPlay
-            style={{ display: "none" }}
-          />
-          <canvas
-            ref={canvasRef}
-            width="640"
-            height="480"
-            className="border-2 border-gray-400 rounded-lg"
-          />
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-6">
+      <h1 className="text-4xl font-bold text-blue-400 mb-6">Squat Counter</h1>
+
+      {!workoutStarted ? (
+        <div className="flex flex-col items-center mb-8">
+          <button
+            onClick={startWorkout}
+            className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg shadow-lg transition duration-300 text-xl"
+          >
+            Start Workout
+          </button>
+
+          {saveStatus && (
+            <div
+              className={`mt-4 p-3 rounded-lg ${
+                saveStatus.success ? "bg-green-800" : "bg-red-800"
+              }`}
+            >
+              {saveStatus.message}
+            </div>
+          )}
+
+          {savedCounter > 0 && (
+            <div className="mt-6 text-center">
+              <h3 className="text-xl text-blue-300">Last Workout</h3>
+              <p className="text-2xl font-bold text-green-400 mt-2">
+                {savedCounter} squats in {formatTime(workoutDuration)}
+              </p>
+            </div>
+          )}
         </div>
-        <div
-          className={`stats p-6 rounded-lg w-full md:w-64 ${
-            darkMode ? "bg-gray-800" : "bg-white shadow-2xl"
-          }`}
-        >
-          <div className="stat-item mb-4 ">
-            <h3 className="text-lg font-medium">Squats</h3>
-            <p className="text-3xl font-bold">{counter}</p>
+      ) : (
+        <>
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+            <div className="relative">
+              <video
+                ref={videoRef}
+                className="w-[320px] md:w-[640px] h-auto rounded-lg shadow-lg border-4 border-blue-500"
+                width="640"
+                height="480"
+                autoPlay
+              ></video>
+              <canvas
+                ref={canvasRef}
+                className="absolute top-0 left-0 w-full h-full"
+                width="640"
+                height="480"
+              ></canvas>
+            </div>
           </div>
-          <div className="stat-item mb-4">
-            <h3 className="text-lg font-medium">Knee Angle</h3>
-            <p className="text-3xl font-bold">{angle}°</p>
+
+          <div className="mt-6 w-full max-w-lg bg-gray-800 rounded-lg shadow-lg p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-semibold text-blue-300">
+                Workout Stats
+              </h2>
+              <div className="text-xl font-bold text-yellow-300">
+                {formatTime(workoutDuration)}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 text-lg mt-4">
+              <p className="flex justify-between border-b border-gray-700 pb-2">
+                Squats: <span className="font-bold text-green-400">{counter}</span>
+              </p>
+              <p className="flex justify-between border-b border-gray-700 pb-2">
+                Angle: <span className="font-bold text-yellow-400">{angle}°</span>
+              </p>
+              <p className="flex justify-between border-b border-gray-700 pb-2">
+                Position:{" "}
+                <span className="font-bold text-purple-400">{position}</span>
+              </p>
+              <p className="flex justify-between border-b border-gray-700 pb-2">
+                Feedback:{" "}
+                <span className="font-bold text-red-400">{feedback}</span>
+              </p>
+            </div>
+
+            <button
+              onClick={endWorkout}
+              disabled={isSaving}
+              className={`mt-6 w-full py-3 ${
+                isSaving ? "bg-gray-600" : "bg-red-600 hover:bg-red-700"
+              } text-white font-bold rounded-lg shadow-lg transition duration-300 text-xl`}
+            >
+              {isSaving ? "Saving..." : "End & Save Workout"}
+            </button>
           </div>
-          <div className="stat-item mb-4">
-            <h3 className="text-lg font-medium">Position</h3>
-            <p className="text-xl">{position}</p>
-          </div>
-          <div className="stat-item">
-            <h3 className="text-lg font-medium">Feedback</h3>
-            <p className="text-sm mt-2">{feedback}</p>
-          </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }

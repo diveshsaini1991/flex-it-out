@@ -3,20 +3,46 @@ const API_URL = 'http://localhost:3000/api';
 
 export const api = {
   // Auth API calls
+  // login: async (email, password) => {
+  //   const response = await fetch(`${API_URL}/auth/login`, {
+  //     method: 'POST',
+  //     credentials: 'include',
+  //     headers: { 'Content-Type': 'application/json' },
+  //     body: JSON.stringify({ email, password })
+  //   });
+  //   console.log(response);
+  //   // localStorage.putItem("token");
+  //   if (!response.ok) {
+  //     const error = await response.json();
+  //     throw new Error(error.error || 'Login failed');
+  //   }
+  //   const data = await response.json();
+  //   return data;
+  // }
+  // 
   login: async (email, password) => {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
-      credentials: 'include',
+      credentials: 'include', // Important: Ensures cookies are sent and received
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
+
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Login failed');
     }
+
     const data = await response.json();
+
+    // If the token is returned in the response body, store it in localStorage
+    if (data.token) {
+      localStorage.setItem("token", data.token);
+    }
+
     return data;
-  },
+  }
+  ,
   
 
   signup: async (name, email, password) => {
@@ -26,6 +52,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password })
     });
+    console.log("response",response)
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Signup failed');
