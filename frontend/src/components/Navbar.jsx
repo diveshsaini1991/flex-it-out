@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api.js';
 import { Sun, Moon } from 'lucide-react';
 
@@ -10,6 +10,7 @@ const Navbar = ({
   toggleDarkMode 
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = async () => {
     try {
@@ -21,10 +22,22 @@ const Navbar = ({
     }
   };
 
+  useEffect(() => {
+    const navbar = document.querySelector('nav');
+    if (!navbar) return;
+    
+    navbar.style.transition = 'transform 0.3s ease';
+    
+    if (location.pathname !== '/') {
+      navbar.style.transform = 'translateY(0)';
+      return;
+    }
+  }, [location.pathname]);
+
   return (
     <nav className={`
       fixed top-0 left-0 right-0 z-50
-      transition-colors duration-200
+      transition-all duration-200
       ${darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}
       border-b
     `}>
@@ -43,8 +56,11 @@ const Navbar = ({
           <div className="flex items-center space-x-4">
             {isAuthenticated ? (
               <>
-                <NavLink darkMode={darkMode} onClick={() => navigate('/home')}>
+              <NavLink darkMode={darkMode} onClick={() => navigate('/')}>
                   Home
+                </NavLink>
+                <NavLink darkMode={darkMode} onClick={() => navigate('/exercises')}>
+                  Exercises
                 </NavLink>
                 <NavLink darkMode={darkMode} onClick={() => navigate('/profile')}>
                   Profile

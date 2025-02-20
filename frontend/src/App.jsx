@@ -8,9 +8,13 @@ import Home from "./pages/Home.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Challenge from "./pages/Challenge.jsx";
 import Squat from "./pages/squat.jsx";  
+import Landing from "./pages/Landing.jsx"; 
 
 const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem("isAuthenticated") === "true";
+  });
+
   const [darkMode, setDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme) {
@@ -21,22 +25,20 @@ const App = () => {
 
   useEffect(() => {
     localStorage.setItem("theme", darkMode ? "dark" : "light");
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    document.documentElement.classList.toggle("dark", darkMode);
   }, [darkMode]);
 
+  useEffect(() => {
+    localStorage.setItem("isAuthenticated", isAuthenticated);
+  }, [isAuthenticated]);
+
   const toggleDarkMode = () => {
-    setDarkMode(prev => !prev);
+    setDarkMode((prev) => !prev);
   };
 
   return (
     <Router>
-      <div className={`min-h-screen transition-colors duration-200 ${
-        darkMode ? "dark bg-gray-900 text-white" : "bg-gray-100 text-black"
-      }`}>
+      <div className={`min-h-screen transition-colors duration-200 ${darkMode ? "dark bg-gray-900 text-white" : "bg-gray-100 text-black"}`}>
         <Navbar 
           isAuthenticated={isAuthenticated} 
           setIsAuthenticated={setIsAuthenticated}
@@ -45,42 +47,28 @@ const App = () => {
         />
         <div className="pt-16">
           <Routes>
-            <Route 
-              path="/login" 
-              element={
-                <Login 
-                  setIsAuthenticated={setIsAuthenticated}
-                  darkMode={darkMode} 
-                />
-              } 
-            />
-            <Route 
-              path="/signup" 
-              element={
-                <Signup 
-                  setIsAuthenticated={setIsAuthenticated}
-                  darkMode={darkMode} 
-                />
-              } 
-            />
+            <Route path="/" element={<Landing isAuthenticated={isAuthenticated} darkMode={darkMode} />} />
+            <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} darkMode={darkMode} />} />
+            <Route path="/signup" element={<Signup setIsAuthenticated={setIsAuthenticated} darkMode={darkMode} />} />
             
             {isAuthenticated ? (
-            <>
-              <Route path="/profile" element={<Profile darkMode={darkMode} />} />
-              <Route path="/leaderboard" element={<Leaderboard darkMode={darkMode} />} />
-              <Route path="/challenges" element={<Challenge darkMode={darkMode} />} />
-              <Route path="/home" element={<Home darkMode={darkMode} />} />
-              <Route path="/squat" element={<Squat darkMode={darkMode} />} />
-              <Route path="*" element={<Navigate to="/home" />} />
-            </>
-          ) : (
-            <Route path="*" element={<Navigate to="/login" />} />
-          )}
+              <>
+                <Route path="/profile" element={<Profile darkMode={darkMode} />} />
+                <Route path="/leaderboard" element={<Leaderboard darkMode={darkMode} />} />
+                <Route path="/challenges" element={<Challenge darkMode={darkMode} />} />
+                <Route path="/exercises" element={<Home darkMode={darkMode} />} />
+                <Route path="/squat" element={<Squat darkMode={darkMode} />} />
+                <Route path="*" element={<Navigate to="/home" />} />
+              </>
+            ) : (
+              <Route path="*" element={<Navigate to="/login" />} />
+            )}
           </Routes>
         </div>
       </div>
     </Router>
   );
 };
+
 
 export default App;
