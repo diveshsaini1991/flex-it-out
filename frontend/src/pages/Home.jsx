@@ -1,11 +1,12 @@
 import React from 'react'
-
+import { useNavigate } from 'react-router-dom';
 const Home = ({ darkMode }) => {
   const workouts = [
     { id: 1, name: 'Squats', description: 'Perfect for leg day' },
     { id: 2, name: 'Push-ups', description: 'Build upper body strength' },
     { id: 3, name: 'Crunches', description: 'Core strengthening exercise' }
   ];
+  const navigate = useNavigate();
 
   return (
     <div className="container mx-auto p-8">
@@ -30,7 +31,7 @@ const Home = ({ darkMode }) => {
             }`}>
               {workout.description}
             </p>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200">
+            <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200" onClick={() => navigate('/squat')}>
               Start Workout
             </button>
           </div>

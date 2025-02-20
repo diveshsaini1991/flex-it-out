@@ -7,6 +7,7 @@ import Leaderboard from "./pages/Leaderboard.jsx";
 import Home from "./pages/Home.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Challenge from "./pages/Challenge.jsx";
+import Squat from "./pages/squat.jsx";  
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -69,6 +70,7 @@ const App = () => {
               <Route path="/leaderboard" element={<Leaderboard darkMode={darkMode} />} />
               <Route path="/challenges" element={<Challenge darkMode={darkMode} />} />
               <Route path="/home" element={<Home darkMode={darkMode} />} />
+              <Route path="/squat" element={<Squat darkMode={darkMode} />} />
               <Route path="*" element={<Navigate to="/home" />} />
             </>
           ) : (
