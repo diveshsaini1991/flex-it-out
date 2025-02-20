@@ -4,6 +4,7 @@ const User = require("../models/user.model.js");
 
 const getLeaderboard = async (req, res) => {
     try {
+      
       const leaders = await User.find()
         .select('name points totalWorkouts')
         .sort({ points: -1 })

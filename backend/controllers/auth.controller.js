@@ -8,6 +8,7 @@ const signup = async (req, res) => {
   try {
     const { name, email, password } = req.body;
     
+    
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ error: 'Email already registered' });
@@ -20,9 +21,9 @@ const signup = async (req, res) => {
       email,
       password: hashedPassword
     });
-
+    console.log(name)
     await user.save();
-
+    console.log(name)
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
     
     res.cookie('token', token, {
@@ -31,6 +32,7 @@ const signup = async (req, res) => {
       sameSite: 'strict',
       maxAge: 24 * 60 * 60 * 1000 
     });
+    console.log("signup")
 
     res.status(201).json({ 
       userId: user._id,
@@ -38,6 +40,7 @@ const signup = async (req, res) => {
       email: user.email
     });
   } catch (error) {
+    console.log(error.message)
     res.status(400).json({ error: error.message });
   }
 };
