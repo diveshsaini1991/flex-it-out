@@ -40,12 +40,12 @@ const Navbar = ({
   };
 
   const handleDropdownItemClick = (action) => {
-    action(); // Perform the navigation or external URL redirection
-    setIsChallengesOpen(false); // Close the dropdown
+    action(); 
+    setIsChallengesOpen(false); 
   };
 
   const handleOneOnOneClick = () => {
-    window.location.href = "http://localhost:3001/"; // Redirect to external URL
+    window.location.href = "http://localhost:3001/"; 
   };
 
   return (
@@ -63,7 +63,6 @@ const Navbar = ({
     >
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
           <button
             onClick={() => navigate("/home")}
             className={`
@@ -71,17 +70,19 @@ const Navbar = ({
               ${darkMode ? "text-white" : "text-gray-900"}
               hover:opacity-80 transition-opacity duration-200
             `}
-            style={{ fontFamily: "'Roboto', sans-serif" }} // Apply custom font
+            style={{ fontFamily: "'Roboto', sans-serif" }} 
           >
             FLEX-IT-OUT
           </button>
 
-          {/* Navigation Links */}
           <div className="flex items-center space-x-4">
             {isAuthenticated ? (
               <>
                 <NavLink darkMode={darkMode} onClick={() => navigate("/")}>
                   Home
+                </NavLink>
+                <NavLink darkMode={darkMode} onClick={() => navigate("/blogs")}>
+                  Blogs
                 </NavLink>
                 <NavLink
                   darkMode={darkMode}

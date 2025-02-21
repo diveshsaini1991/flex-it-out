@@ -7,36 +7,28 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Serve static files from the public directory
 app.use(express.static(path.join(__dirname, "public")));
 
-// Route all requests to index.html for client-side routing
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// Track rooms and users
 const rooms = new Map();
 
-// Socket.io connection handler
 io.on("connection", (socket) => {
   console.log(`User connected: ${socket.id}`);
   let currentRoom = null;
 
-  // Join a room
   socket.on("join-room", (roomId) => {
     currentRoom = roomId;
     socket.join(roomId);
 
-    // Initialize room if it doesn't exist
     if (!rooms.has(roomId)) {
       rooms.set(roomId, new Set());
     }
 
-    // Add user to room
     rooms.get(roomId).add(socket.id);
 
-    // Send room status to the client
     socket.emit("room-status", {
       isHost: rooms.get(roomId).size === 1,
       userCount: rooms.get(roomId).size,
@@ -44,7 +36,6 @@ io.on("connection", (socket) => {
 
     console.log(`User ${socket.id} joined room ${roomId}`);
 
-    // Notify others in the room if there are now 2 users
     if (rooms.get(roomId).size === 2) {
       const users = Array.from(rooms.get(roomId));
       const otherUser = users.find((id) => id !== socket.id);
@@ -54,7 +45,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  // WebRTC signaling
   socket.on("offer", (data) => {
     console.log(`Relaying offer from ${socket.id} to ${data.to}`);
     socket.to(data.to).emit("offer", {
@@ -79,7 +69,6 @@ io.on("connection", (socket) => {
     });
   });
 
-  // Exercise challenge events
   socket.on("squat-count", (count) => {
     if (currentRoom) {
       socket.to(currentRoom).emit("squat-count", count);
@@ -104,16 +93,13 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Handle disconnection
   socket.on("disconnect", () => {
     console.log(`User disconnected: ${socket.id}`);
     if (currentRoom && rooms.has(currentRoom)) {
       rooms.get(currentRoom).delete(socket.id);
 
-      // Notify other users in the room
       socket.to(currentRoom).emit("user-disconnected", socket.id);
 
-      // Clean up empty rooms
       if (rooms.get(currentRoom).size === 0) {
         rooms.delete(currentRoom);
         console.log(`Room ${currentRoom} deleted`);
@@ -122,7 +108,6 @@ io.on("connection", (socket) => {
   });
 });
 
-// Start server
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

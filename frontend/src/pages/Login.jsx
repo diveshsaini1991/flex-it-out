@@ -3,7 +3,6 @@ import { api } from "../services/api.js";
 import { useNavigate } from "react-router-dom";
 
 const Login = ({ setIsAuthenticated, darkMode }) => {
-  // Accept darkMode prop
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const navigate = useNavigate();

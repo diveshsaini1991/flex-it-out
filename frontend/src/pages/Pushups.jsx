@@ -152,7 +152,6 @@ function Pushups({ darkMode }) {
       const rightDistance = calculateDistance(rightShoulder, rightHand);
       const avgDistance = (leftDistance + rightDistance) / 2;
 
-      // Smooth distance using a buffer
       distanceBufferRef.current.push(avgDistance);
       if (distanceBufferRef.current.length > 5) {
         distanceBufferRef.current.shift();
@@ -161,11 +160,9 @@ function Pushups({ darkMode }) {
         distanceBufferRef.current.reduce((a, b) => a + b, 0) /
         distanceBufferRef.current.length;
 
-      // Update form feedback
       const formFeedback = analyzeForm(landmarks);
       setFeedback(formFeedback);
 
-      // Detect push-up position and count reps
       if (smoothedDistance < 0.2 && positionRef.current === "up") {
         positionRef.current = "down";
         setPosition("down");
@@ -175,7 +172,6 @@ function Pushups({ darkMode }) {
         setPosition("up");
       }
 
-      // Update distance
       setDistance(smoothedDistance.toFixed(2));
     }
 

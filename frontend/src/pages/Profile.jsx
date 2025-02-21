@@ -43,7 +43,6 @@ const Profile = ({ darkMode }) => {
         <div className={`rounded-xl shadow-lg p-8 transition-all duration-300 ${
           darkMode ? 'bg-gray-800' : 'bg-white'
         }`}>
-          {/* Profile Header */}
           <div className="text-center mb-8">
             <div className={`w-32 h-32 mx-auto rounded-full mb-4 bg-gradient-to-r ${
               darkMode ? 'from-blue-600 to-purple-600' : 'from-blue-400 to-purple-400'
@@ -59,10 +58,7 @@ const Profile = ({ darkMode }) => {
               {profile.email}
             </p>
           </div>
-
-          {/* Statistics and Achievements */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Statistics Card */}
             <div className={`p-6 rounded-lg transition-all duration-300 hover:scale-105 ${
               darkMode ? 'bg-gradient-to-r from-blue-900 to-blue-700' : 'bg-gradient-to-r from-blue-50 to-blue-100'
             }`}>
@@ -84,8 +80,6 @@ const Profile = ({ darkMode }) => {
                 </p>
               </div>
             </div>
-
-            {/* Achievements Card */}
             <div className={`p-6 rounded-lg transition-all duration-300 hover:scale-105 ${
               darkMode ? 'bg-gradient-to-r from-green-900 to-green-700' : 'bg-gradient-to-r from-green-50 to-green-100'
             }`}>
@@ -103,8 +97,6 @@ const Profile = ({ darkMode }) => {
               </ul>
             </div>
           </div>
-
-          {/* Additional Info */}
           <div className={`mt-8 p-6 rounded-lg transition-all duration-300 hover:scale-105 ${
             darkMode ? 'bg-gradient-to-r from-purple-900 to-purple-700' : 'bg-gradient-to-r from-purple-50 to-purple-100'
           }`}>
