@@ -218,6 +218,54 @@ function Squat({ darkMode }) {
       setSavedCounter(counter);
     }
 
+    if (counter > 0) {
+      await saveWorkout();
+      setSavedCounter(counter);
+      
+     
+      try {
+       
+        
+        const response = await axios.get(
+          "http://localhost:3000/api/challenges",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+        
+       
+        const attemptedChallenges = response.data.attempted.filter(
+          challenge => challenge.type === "squat"    
+        );
+          
+        for (const challenge of attemptedChallenges) {
+          if (counter >= challenge.target) {
+             
+            await axios.post(
+              `http://localhost:3000/api/challenges/complete/${challenge._id}`,
+              {},
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json"
+                }
+              }
+            );
+            
+            
+            setSaveStatus({
+              success: true,
+              message: `Challenge completed: ${challenge.title}!`,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error checking challenges:", error);
+      }
+    }
+
     if (cameraRef.current) {
       cameraRef.current.stop();
       cameraRef.current = null;
@@ -227,6 +275,11 @@ function Squat({ darkMode }) {
       clearInterval(durationTimerRef.current);
     }
   };
+ 
+ 
+
+
+
 
   const saveWorkout = async () => {
     try {

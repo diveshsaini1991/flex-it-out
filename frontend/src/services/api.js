@@ -6,7 +6,7 @@ export const api = {
   login: async (email, password) => {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
-      credentials: 'include', // Important: Ensures cookies are sent and received
+      credentials: 'include',  
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
@@ -18,8 +18,7 @@ export const api = {
 
     const data = await response.json();
 
-    // If the token is returned in the response body, store it in localStorage
-    if (data.token) {
+     if (data.token) {
       localStorage.setItem("token", data.token);
     }
 
@@ -69,8 +68,7 @@ export const api = {
     }
   },
 
-  // Profile API calls
-  getProfile: async () => {
+   getProfile: async () => {
     const response = await fetch(`${API_URL}/user/profile`, {
       credentials: 'include'
     });
@@ -78,8 +76,7 @@ export const api = {
     return response.json();
   },
 
-  // Workouts API calls
-  getWorkouts: async () => {
+   getWorkouts: async () => {
     const response = await fetch(`${API_URL}/workouts`, {
       credentials: 'include'
     });
@@ -99,9 +96,18 @@ export const api = {
     if (!response.ok) throw new Error('Failed to save workout');
     return response.json();
   },
-
-  // Challenges API calls
-  getChallenges: async () => {
+  getUserChallenges: async () => {
+    const token = localStorage.getItem('token');
+    const response = await fetch('http://localhost:3000/api/challenges', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }, credentials: 'include',
+      method: 'GET',
+    });
+    if (!response.ok) throw new Error('Failed to fetch user challenges');
+    return response.json();
+  },
+   getChallenges: async () => {
     const response = await fetch(`${API_URL}/challenges`, {
       credentials: 'include'
     });
@@ -110,24 +116,36 @@ export const api = {
   },
 
   joinChallenge: async (challengeId) => {
-    const response = await fetch(`${API_URL}/challenges/join`, {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`http://localhost:3000/api/challenges/join/${challengeId}`, {
       method: 'POST',
-      credentials: 'include',
       headers: {
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ challengeId })
+      },credentials: 'include',
+       
     });
     if (!response.ok) throw new Error('Failed to join challenge');
     return response.json();
   },
-
-  // Leaderboard API calls
+  
   getLeaderboard: async () => {
     const response = await fetch(`${API_URL}/leaderboard`, {
       credentials: 'include'
     });
     if (!response.ok) throw new Error('Failed to fetch leaderboard');
+    return response.json();
+  },
+  completeChallenge: async (challengeId) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`http://localhost:3000/api/challenges/complete/${challengeId}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!response.ok) throw new Error('Failed to complete challenge');
     return response.json();
   }
 };
