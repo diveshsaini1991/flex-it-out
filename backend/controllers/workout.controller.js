@@ -3,51 +3,27 @@ const Workout = require("../models/workout.model.js");
 
 const getWorkouts = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const { limit = 10, skip = 0, type } = req.query;
-
-    const query = { userId };
-    if (type) {
-      query.type = type;
+    const query = {};
+    if (req.user && req.user.id) {
+      query.userId = req.user.id;
+    }
+    
+    if (req.query.type) {
+      query.type = req.query.type;
     }
 
-    const workouts = await Workout.find(query)
-      .sort({ timestamp: -1 })
-      .limit(parseInt(limit))
-      .skip(parseInt(skip));
-
-    const total = await Workout.countDocuments(query);
-
-    const stats = await Workout.aggregate([
-      { $match: { userId: require("mongoose").Types.ObjectId(userId) } },
-      {
-        $group: {
-          _id: "$type",
-          totalCount: { $sum: "$count" },
-          totalWorkouts: { $sum: 1 },
-          avgCount: { $avg: "$count" },
-          totalDuration: { $sum: "$duration" },
-        },
-      },
-    ]);
+    const workouts = await Workout.find(query).sort({ timestamp: -1 });
 
     res.status(200).json({
       success: true,
-      data: {
-        workouts,
-        pagination: {
-          total,
-          limit: parseInt(limit),
-          skip: parseInt(skip),
-        },
-        stats,
-      },
+      count: workouts.length,
+      data: workouts
     });
   } catch (error) {
     console.error("Error getting workouts:", error);
     res.status(500).json({
       success: false,
-      message: "Server error",
+      message: "Server error"
     });
   }
 };
@@ -68,20 +44,13 @@ const addWorkout = async (req, res) => {
       });
     }
 
-    let workout = await Workout.findOne({ userId, type });
-
-    if (workout) {
-      workout.count += count;
-      workout.duration += duration;
-    } else {
-      workout = new Workout({
-        userId,
-        type,
-        count,
-        duration,
-        timestamp: Date.now(),
-      });
-    }
+    const workout = new Workout({
+      userId,
+      type,
+      count,
+      duration,
+      timestamp: Date.now(),
+    });
 
     await workout.save();
 
@@ -113,7 +82,6 @@ const addWorkout = async (req, res) => {
     }
 
     user.points += pointsEarned;
-
 
     await user.save();
 
