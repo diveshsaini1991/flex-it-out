@@ -6,7 +6,8 @@ const userSchema = new mongoose.Schema({
   password: String,
   totalWorkouts: { type: Number, default: 0 },
   achievements: [String],
-  points: { type: Number, default: 0 }
+  points: { type: Number, default: 0 },
+  role: { type: String, default: 'user' }
 });
 
 const User = mongoose.model('User', userSchema);

@@ -20,26 +20,19 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-// MongoDB connection
 connectDB();
 
-// Auth Routes
 app.use('/api/auth', require('./routes/auth.routes.js'));
 
-// User Routes
 app.use('/api/user', require('./routes/user.routes.js'));
 
-// Workout Routes
 app.use('/api/workouts', require('./routes/workout.routes.js'));
 
-// Challenge Routes
 app.use('/api/challenges', require('./routes/challenges.routes.js'));
 
-// Leaderboard Route
 app.use('/api/leaderboard', require('./routes/leaderboard.routes.js'));
 
 
-// Start server
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

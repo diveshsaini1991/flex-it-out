@@ -1,5 +1,5 @@
 const express = require('express');
-const authenticateToken = require('../middleware/authentication.js');
+const {authenticateToken} = require('../middleware/authentication.js');
 const { getLeaderboard } = require('../controllers/leaderboard.controller.js');
 const router = express.Router();
 
