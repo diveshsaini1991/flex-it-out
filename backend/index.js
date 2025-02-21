@@ -32,6 +32,8 @@ app.use('/api/challenges', require('./routes/challenges.routes.js'));
 
 app.use('/api/leaderboard', require('./routes/leaderboard.routes.js'));
 
+app.use('/api/blog', require('./routes/blog.routes.js'));
+
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

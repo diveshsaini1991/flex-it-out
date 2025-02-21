@@ -11,6 +11,7 @@ const authenticateToken = async (req, res, next) => {
 
     const decoded = await jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
+    console.log("decoded",decoded)
 
     if (!req.user.role || (req.user.role !== "admin" && req.user.role !== "user")) {
       return res.status(403).json({ error: "Invalid role" });
