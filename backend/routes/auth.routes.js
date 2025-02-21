@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.post('/signup', signup);
 router.post('/login', login);
-router.post('/logout', userLogout);
+router.post('/logout',authenticateToken, userLogout);
 router.post('/admin/logout', authenticateToken ,isAdmin , adminLogout);
 router.get('/status', checkAuthStatus);
 router.post('/admin/login', adminLogin);
