@@ -114,7 +114,6 @@ const addWorkout = async (req, res) => {
 
     user.points += pointsEarned;
 
-    checkAndAddAchievements(user, type, count);
 
     await user.save();
 

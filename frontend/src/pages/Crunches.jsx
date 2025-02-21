@@ -3,13 +3,13 @@ import { Pose } from "@mediapipe/pose";
 import { Camera } from "@mediapipe/camera_utils";
 import { drawConnectors, drawLandmarks } from "@mediapipe/drawing_utils";
 import axios from "axios";
- 
 
-function Squat({ darkMode }) {
+
+function Crunches({ darkMode }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [counter, setCounter] = useState(0);
-  const [angle, setAngle] = useState(0);
+  const [distance, setDistance] = useState(0);
   const [position, setPosition] = useState("None");
   const [feedback, setFeedback] = useState("None");
   const [workoutStarted, setWorkoutStarted] = useState(false);
@@ -21,7 +21,7 @@ function Squat({ darkMode }) {
 
   const poseRef = useRef(null);
   const cameraRef = useRef(null);
-  const angleBufferRef = useRef([]);
+  const distanceBufferRef = useRef([]);
   const positionRef = useRef("None");
   const durationTimerRef = useRef(null);
 
@@ -88,43 +88,23 @@ function Squat({ darkMode }) {
     }
   }, [workoutStarted]);
 
-  const calculateAngle = (a, b, c) => {
-    const radians =
-      Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
-    let angle = Math.abs((radians * 180.0) / Math.PI);
-    if (angle > 180.0) {
-      angle = 360 - angle;
-    }
-    return angle;
+  const calculateDistance = (a, b) => {
+    return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
   };
 
   const analyzeForm = (landmarks) => {
     const feedback = [];
-    const leftKnee = landmarks[25];
-    const rightKnee = landmarks[26];
-    const leftAnkle = landmarks[27];
-    const rightAnkle = landmarks[28];
     const leftShoulder = landmarks[11];
     const rightShoulder = landmarks[12];
     const leftHip = landmarks[23];
     const rightHip = landmarks[24];
 
-     
-    const kneeAnkleAlignment =
-      (Math.abs(leftKnee.x - leftAnkle.x) +
-        Math.abs(rightKnee.x - rightAnkle.x)) /
-      2;
-    if (kneeAnkleAlignment > 0.1) {
-      feedback.push("Keep knees aligned with ankles");
-    }
+    const shoulderHipAlignment =
+      Math.abs(leftShoulder.y - leftHip.y) +
+      Math.abs(rightShoulder.y - rightHip.y);
 
-    
-    const backAlignment =
-      (Math.abs(leftShoulder.x - leftHip.x) +
-        Math.abs(rightShoulder.x - rightHip.x)) /
-      2;
-    if (backAlignment > 0.1) {
-      feedback.push("Keep back straight");
+    if (shoulderHipAlignment > 0.1) {
+      feedback.push("Keep your shoulders aligned with your hips");
     }
 
     return feedback.length > 0 ? feedback.join(" | ") : "Good form!";
@@ -163,38 +143,40 @@ function Squat({ darkMode }) {
         radius: 4,
       });
 
-      const leftHip = landmarks[23];
+      const leftShoulder = landmarks[11];
+      const rightShoulder = landmarks[12];
       const leftKnee = landmarks[25];
-      const leftAnkle = landmarks[27];
-      const rightHip = landmarks[24];
       const rightKnee = landmarks[26];
-      const rightAnkle = landmarks[28];
 
-      const leftAngle = calculateAngle(leftHip, leftKnee, leftAnkle);
-      const rightAngle = calculateAngle(rightHip, rightKnee, rightAnkle);
-      const angle = (leftAngle + rightAngle) / 2;
+      const leftDistance = calculateDistance(leftShoulder, leftKnee);
+      const rightDistance = calculateDistance(rightShoulder, rightKnee);
+      const avgDistance = (leftDistance + rightDistance) / 2;
 
-      angleBufferRef.current.push(angle);
-      if (angleBufferRef.current.length > 5) {
-        angleBufferRef.current.shift();
+      // Smooth distance using a buffer
+      distanceBufferRef.current.push(avgDistance);
+      if (distanceBufferRef.current.length > 5) {
+        distanceBufferRef.current.shift();
       }
-      const smoothedAngle =
-        angleBufferRef.current.reduce((a, b) => a + b, 0) /
-        angleBufferRef.current.length;
+      const smoothedDistance =
+        distanceBufferRef.current.reduce((a, b) => a + b, 0) /
+        distanceBufferRef.current.length;
 
+      // Update form feedback
       const formFeedback = analyzeForm(landmarks);
       setFeedback(formFeedback);
 
-      if (smoothedAngle > 150 && positionRef.current === "down") {
-        positionRef.current = "up";
-        setPosition("up");
-        setCounter((prev) => prev + 1);
-      } else if (smoothedAngle < 100) {
+      // Detect crunch position and count reps
+      if (smoothedDistance < 0.3 && positionRef.current === "up") {
         positionRef.current = "down";
         setPosition("down");
+        setCounter((prev) => prev + 1);
+      } else if (smoothedDistance > 0.5) {
+        positionRef.current = "up";
+        setPosition("up");
       }
 
-      setAngle(Math.round(smoothedAngle));
+      // Update distance
+      setDistance(smoothedDistance.toFixed(2));
     }
 
     canvasCtx.restore();
@@ -204,7 +186,7 @@ function Squat({ darkMode }) {
     setWorkoutStarted(true);
     setWorkoutStartTime(Date.now());
     setCounter(0);
-    angleBufferRef.current = [];
+    distanceBufferRef.current = [];
     positionRef.current = "None";
     setPosition("None");
     setSaveStatus(null);
@@ -242,7 +224,7 @@ function Squat({ darkMode }) {
       }
 
       const workoutData = {
-        type: "squat",
+        type: "crunches",
         count: counter,
         duration: workoutDuration,
       };
@@ -255,7 +237,6 @@ function Squat({ darkMode }) {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          withCredentials: true, 
         }
       );
 
@@ -283,7 +264,7 @@ function Squat({ darkMode }) {
   return (
     <div className={`min-h-screen ${darkMode ? "bg-gray-900" : "bg-gray-100"} p-6`}>
       <h1 className={`text-4xl font-bold text-center mb-8 bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent`}>
-        Squat Counter
+        Crunches Counter
       </h1>
 
       <div className="max-w-7xl mx-auto">
@@ -306,7 +287,7 @@ function Squat({ darkMode }) {
               <div className="mt-6 text-center">
                 <h3 className="text-xl text-blue-400">Last Workout</h3>
                 <p className="text-2xl font-bold text-green-500 mt-2">
-                  {savedCounter} squats in {formatTime(workoutDuration)}
+                  {savedCounter} crunches in {formatTime(workoutDuration)}
                 </p>
               </div>
             )}
@@ -339,12 +320,12 @@ function Squat({ darkMode }) {
 
               <div className="grid grid-cols-2 gap-4 text-lg mt-4">
                 <div className={`p-4 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} hover:scale-105 transition-all duration-300`}>
-                  <p>Squats</p>
+                  <p>Crunches</p>
                   <p className="font-bold text-green-500">{counter}</p>
                 </div>
                 <div className={`p-4 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} hover:scale-105 transition-all duration-300`}>
-                  <p>Angle</p>
-                  <p className="font-bold text-yellow-500">{angle}°</p>
+                  <p>Distance</p>
+                  <p className="font-bold text-yellow-500">{distance}</p>
                 </div>
                 <div className={`p-4 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} hover:scale-105 transition-all duration-300`}>
                   <p>Position</p>
@@ -370,28 +351,28 @@ function Squat({ darkMode }) {
         )}
 
         <div className={`mt-12 p-6 rounded-lg shadow-lg ${darkMode ? "bg-gray-800" : "bg-white"}`}>
-          <h2 className="text-2xl font-bold text-blue-400 mb-4">How to Perform Squats</h2>
+          <h2 className="text-2xl font-bold text-blue-400 mb-4">How to Perform Crunches</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <video className="rounded-lg shadow-lg" muted loop autoPlay controls>
-              <source src="https://videos.pexels.com/video-files/4065502/4065502-uhd_2560_1440_30fps.mp4" type="video/mp4" />
+              <source src="https://videos.pexels.com/video-files/4754028/4754028-uhd_2732_1440_25fps.mp4" type="video/mp4" />
               Your browser does not support the video tag.
             </video>
             <div className="space-y-4">
               <div className={`p-4 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} hover:scale-105 transition-all duration-300`}>
                 <h3 className="font-bold text-lg">1. Starting Position</h3>
-                <p>Stand with your feet shoulder-width apart.</p>
+                <p>Lie on your back with your knees bent and feet flat on the floor.</p>
               </div>
               <div className={`p-4 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} hover:scale-105 transition-all duration-300`}>
-                <h3 className="font-bold text-lg">2. Lowering Down</h3>
-                <p>Lower your body until your thighs are parallel to the ground.</p>
+                <h3 className="font-bold text-lg">2. Hand Placement</h3>
+                <p>Place your hands behind your head or across your chest.</p>
               </div>
               <div className={`p-4 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} hover:scale-105 transition-all duration-300`}>
-                <h3 className="font-bold text-lg">3. Pushing Up</h3>
-                <p>Push through your heels to return to the starting position.</p>
+                <h3 className="font-bold text-lg">3. Lifting Up</h3>
+                <p>Lift your shoulders off the ground by contracting your abdominal muscles.</p>
               </div>
               <div className={`p-4 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} hover:scale-105 transition-all duration-300`}>
-                <h3 className="font-bold text-lg">4. Form Tips</h3>
-                <p>Keep your back straight and chest up throughout the movement.</p>
+                <h3 className="font-bold text-lg">4. Lowering Down</h3>
+                <p>Lower back down slowly and repeat.</p>
               </div>
             </div>
           </div>
@@ -401,4 +382,4 @@ function Squat({ darkMode }) {
   );
 }
 
-export default Squat;
+export default Crunches;

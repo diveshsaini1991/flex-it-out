@@ -2,24 +2,7 @@
 const API_URL = 'http://localhost:3000/api';
 
 export const api = {
-  // Auth API calls
-  // login: async (email, password) => {
-  //   const response = await fetch(`${API_URL}/auth/login`, {
-  //     method: 'POST',
-  //     credentials: 'include',
-  //     headers: { 'Content-Type': 'application/json' },
-  //     body: JSON.stringify({ email, password })
-  //   });
-  //   console.log(response);
-  //   // localStorage.putItem("token");
-  //   if (!response.ok) {
-  //     const error = await response.json();
-  //     throw new Error(error.error || 'Login failed');
-  //   }
-  //   const data = await response.json();
-  //   return data;
-  // }
-  // 
+  
   login: async (email, password) => {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
